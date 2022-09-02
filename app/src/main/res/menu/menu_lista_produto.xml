@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item android:title="Ordenar por nome">
+        <menu>
+            <item
+                android:id="@+id/menu_lista_produto_nome_desc"
+                android:title="nome desc" />
+
+            <item
+                android:id="@+id/menu_lista_produto_nome_asc"
+                android:title="nome asc" />
+        </menu>
+    </item>
+
+    <item android:title="Ordenar por descrição">
+        <menu>
+            <item
+                android:id="@+id/menu_lista_produto_description_desc"
+                android:title="descrição desc" />
+
+            <item
+                android:id="@+id/menu_lista_produto_description_asc"
+                android:title="descrição asc" />
+        </menu>
+    </item>
+
+    <item android:title="Ordenar por valor">
+        <menu>
+            <item
+                android:id="@+id/menu_lista_produto_value_desc"
+                android:title="valor desc" />
+
+            <item
+                android:id="@+id/menu_lista_produto_value_asc"
+                android:title="valor asc" />
+        </menu>
+    </item>
+
+    <item
+        android:id="@+id/menu_lista_produto_no_order"
+        android:title="Sem ordenação" />
+</menu>

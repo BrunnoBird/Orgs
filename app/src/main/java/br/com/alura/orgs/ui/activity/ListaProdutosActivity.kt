@@ -2,15 +2,23 @@ package br.com.alura.orgs.ui.activity
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
+import br.com.alura.orgs.R
 import br.com.alura.orgs.database.AppDatabase
 import br.com.alura.orgs.databinding.ActivityListaProdutosActivityBinding
+import br.com.alura.orgs.model.Produto
 import br.com.alura.orgs.ui.recyclerview.adapter.ListaProdutosAdapter
 
 class ListaProdutosActivity : AppCompatActivity() {
     private val adapter = ListaProdutosAdapter(context = this)
     private val binding by lazy {
         ActivityListaProdutosActivityBinding.inflate(layoutInflater)
+    }
+    private val produtoDao by lazy {
+        val db = AppDatabase.getInstance(this)
+        db.produtoDao()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -22,9 +30,45 @@ class ListaProdutosActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        val db = AppDatabase.getInstance(this)
-        val produtoDao = db.produtoDao()
-        adapter.atualiza(produtoDao.BuscaTodos())
+        adapter.atualiza(produtoDao.buscaTodos())
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_lista_produto, menu)
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        val produtosOrdenado: List<Produto>? = when (item.itemId) {
+            R.id.menu_lista_produto_nome_desc -> {
+                produtoDao.buscaTodosOrdenadoPorNomeDesc()
+            }
+            R.id.menu_lista_produto_nome_asc -> {
+                produtoDao.buscaTodosOrdenadoPorNomeAsc()
+            }
+            R.id.menu_lista_produto_description_desc -> {
+                produtoDao.buscaTodosOrdenadoPorDescricaoDesc()
+            }
+            R.id.menu_lista_produto_description_asc -> {
+                produtoDao.buscaTodosOrdenadoPorDescricaoAsc()
+            }
+            R.id.menu_lista_produto_value_desc -> {
+                produtoDao.buscaTodosOrdenadoPorValorDesc()
+            }
+            R.id.menu_lista_produto_value_asc -> {
+                produtoDao.buscaTodosOrdenadoPorValorAsc()
+            }
+            R.id.menu_lista_produto_no_order -> {
+                produtoDao.buscaTodos()
+            }
+            else -> null
+        }
+
+        //Atualizando o adapter com a lista ordenada
+        produtosOrdenado?.let {
+            adapter.atualiza(it)
+        }
+        return super.onOptionsItemSelected(item)
     }
 
     private fun configuraFab() {
