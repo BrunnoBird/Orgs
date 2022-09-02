@@ -4,14 +4,15 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import br.com.alura.orgs.R
 import br.com.alura.orgs.database.AppDatabase
 import br.com.alura.orgs.databinding.ActivityListaProdutosActivityBinding
 import br.com.alura.orgs.model.Produto
 import br.com.alura.orgs.ui.recyclerview.adapter.ListaProdutosAdapter
-import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
 class ListaProdutosActivity : AppCompatActivity() {
     private val adapter = ListaProdutosAdapter(context = this)
@@ -22,7 +23,8 @@ class ListaProdutosActivity : AppCompatActivity() {
         val db = AppDatabase.getInstance(this)
         db.produtoDao()
     }
-    private val job = Job()
+    private var produtoLista: List<Produto>? = null
+    private var listaNaoOrdenada: List<Produto> = listOf()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,36 +36,11 @@ class ListaProdutosActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
-        //handler responsável por tratamento de erros
-        val handler = CoroutineExceptionHandler { coroutineContext, throwable ->
-            //Essa lambda expression é como se fosse o Catch
-            Toast.makeText(
-                this@ListaProdutosActivity,
-                "Ocorreu um erro: ${throwable.message}",
-                Toast.LENGTH_SHORT
-            ).show()
-        }
-
-        val scope = MainScope()
-        scope.launch(job) {
-            scope.launch {
-                repeat(1000) {
-                    delay(1000)
-                }
-            }
-
-            //Mudamos o context da coroutines para sair da MAIN para rodar em outra thread e não dar crash
-            val produtos = withContext(Dispatchers.IO) {
-                produtoDao.buscaTodos()
-            }
+        lifecycleScope.launch {
+            val produtos = produtoDao.buscaTodos()
+            listaNaoOrdenada = produtos
             adapter.atualiza(produtos)
         }
-    }
-
-    override fun onDestroy() {
-        //verifica se a activity não está mais disponivel
-        super.onDestroy()
-        job.cancel()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -72,37 +49,33 @@ class ListaProdutosActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        val produtosOrdenado: List<Produto>? = when (item.itemId) {
+
+        when (item.itemId) {
             R.id.menu_lista_produto_nome_desc -> {
-                produtoDao.buscaTodosOrdenadoPorNomeDesc()
+                ordenaNomeDesc()
             }
             R.id.menu_lista_produto_nome_asc -> {
-                produtoDao.buscaTodosOrdenadoPorNomeAsc()
+                ordenaNomeAsc()
             }
             R.id.menu_lista_produto_description_desc -> {
-                produtoDao.buscaTodosOrdenadoPorDescricaoDesc()
+                ordenaDescricaoDesc()
             }
             R.id.menu_lista_produto_description_asc -> {
-                produtoDao.buscaTodosOrdenadoPorDescricaoAsc()
+                ordenaDescricaoAsc()
             }
             R.id.menu_lista_produto_value_desc -> {
-                produtoDao.buscaTodosOrdenadoPorValorDesc()
+                ordenaValorDesc()
             }
             R.id.menu_lista_produto_value_asc -> {
-                produtoDao.buscaTodosOrdenadoPorValorAsc()
+                ordenaValorAsc()
             }
             R.id.menu_lista_produto_no_order -> {
-                produtoDao.buscaTodos()
+                semOrdenar()
             }
-            else -> null
-        }
-
-        //Atualizando o adapter com a lista ordenada
-        produtosOrdenado?.let {
-            adapter.atualiza(it)
         }
         return super.onOptionsItemSelected(item)
     }
+
 
     private fun configuraFab() {
         val fab = binding.activityListaProdutosFab
@@ -130,4 +103,62 @@ class ListaProdutosActivity : AppCompatActivity() {
         }
     }
 
+    private fun ordenaNomeDesc() {
+        lifecycleScope.launch {
+            produtoDao.buscaTodosOrdenadoPorNomeDesc().collect { listaProdutoOrdenada ->
+                produtoLista = listaProdutoOrdenada
+                adapter.atualiza(listaProdutoOrdenada)
+            }
+        }
+    }
+
+    private fun ordenaNomeAsc() {
+        lifecycleScope.launch {
+            produtoDao.buscaTodosOrdenadoPorNomeAsc().collect { listaProdutoOrdenada ->
+                produtoLista = listaProdutoOrdenada
+                adapter.atualiza(listaProdutoOrdenada)
+            }
+        }
+    }
+
+    private fun ordenaDescricaoDesc() {
+        lifecycleScope.launch {
+            produtoDao.buscaTodosOrdenadoPorDescricaoDesc().collect { listaProdutoOrdenada ->
+                produtoLista = listaProdutoOrdenada
+                adapter.atualiza(listaProdutoOrdenada)
+            }
+        }
+    }
+
+    private fun ordenaDescricaoAsc() {
+        lifecycleScope.launch {
+            produtoDao.buscaTodosOrdenadoPorDescricaoAsc().collect { listaProdutoOrdenada ->
+                produtoLista = listaProdutoOrdenada
+                adapter.atualiza(listaProdutoOrdenada)
+            }
+        }
+    }
+
+    private fun ordenaValorDesc() {
+        lifecycleScope.launch {
+            produtoDao.buscaTodosOrdenadoPorValorDesc().collect { listaProdutoOrdenada ->
+                produtoLista = listaProdutoOrdenada
+                adapter.atualiza(listaProdutoOrdenada)
+            }
+        }
+    }
+
+    private fun ordenaValorAsc() {
+        lifecycleScope.launch {
+            produtoDao.buscaTodosOrdenadoPorValorAsc().collect { listaProdutoOrdenada ->
+                produtoLista = listaProdutoOrdenada
+                adapter.atualiza(listaProdutoOrdenada)
+            }
+        }
+    }
+
+    private fun semOrdenar() {
+        produtoLista = listaNaoOrdenada
+        adapter.atualiza(listaNaoOrdenada)
+    }
 }

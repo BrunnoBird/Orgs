@@ -5,18 +5,15 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import br.com.alura.orgs.R
 import br.com.alura.orgs.database.AppDatabase
 import br.com.alura.orgs.databinding.ActivityDetalhesProdutoBinding
 import br.com.alura.orgs.extensions.formataParaMoedaBrasileira
 import br.com.alura.orgs.extensions.tentaCarregarImagem
 import br.com.alura.orgs.model.Produto
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.Dispatchers.Main
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class DetalhesProdutoActivity : AppCompatActivity() {
     private var produtoId: Long = 0L
@@ -28,7 +25,6 @@ class DetalhesProdutoActivity : AppCompatActivity() {
         //temos que colocar by laze pois esta comunicação é feita com o dispositivo somente depois que o onCreate foi executado
         AppDatabase.getInstance(this).produtoDao()
     }
-    private val scope = CoroutineScope(IO)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,12 +38,9 @@ class DetalhesProdutoActivity : AppCompatActivity() {
     }
 
     private fun buscaProduto() {
-        //Coroutine Dispatcher.IO ele usa Pull de Thread somente para fazermos uso.
-        scope.launch {
-            //Buscamos no banco de dados em uma Thread IO
-            produto = produtoDao.buscaPorId(produtoId)
-            //Fazemos a atualização da view na MAIN Thread somente, por isso mudamos o context novamente
-            withContext(Main) {
+        lifecycleScope.launch {
+            produtoDao.buscaPorId(produtoId).collect { produtoEncontrado ->
+                produto = produtoEncontrado
                 produto?.let {
                     preencheCampos(it)
                 } ?: finish()
@@ -61,9 +54,7 @@ class DetalhesProdutoActivity : AppCompatActivity() {
         return super.onCreateOptionsMenu(menu)
     }
 
-    //colocando listaner nas opções de menu
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        //Reflection no Kotlin -> if(::produto.isInitialized) verificamos se o lateinit foi inicializado para evitar NullPointerException
 
         when (item.itemId) {
             R.id.menu_detalhes_produto_editar -> {
@@ -73,7 +64,7 @@ class DetalhesProdutoActivity : AppCompatActivity() {
                 }
             }
             R.id.menu_detalhes_produto_remover -> {
-                scope.launch {
+                lifecycleScope.launch {
                     produto?.let {
                         produtoDao.remove(it)
                     }

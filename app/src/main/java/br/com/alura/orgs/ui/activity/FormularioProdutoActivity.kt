@@ -2,17 +2,15 @@ package br.com.alura.orgs.ui.activity
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import br.com.alura.orgs.database.AppDatabase
 import br.com.alura.orgs.database.dao.ProdutoDao
 import br.com.alura.orgs.databinding.ActivityFormularioProdutoBinding
 import br.com.alura.orgs.extensions.tentaCarregarImagem
 import br.com.alura.orgs.model.Produto
 import br.com.alura.orgs.ui.dialog.FormularioImagemDialog
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Dispatchers.Main
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.math.BigDecimal
 
 class FormularioProdutoActivity : AppCompatActivity() {
@@ -24,8 +22,6 @@ class FormularioProdutoActivity : AppCompatActivity() {
         val db = AppDatabase.getInstance(this)
         db.produtoDao()
     }
-    private val scope = CoroutineScope(Dispatchers.IO)
-
     private var url: String? = null
     private var produtoId = 0L
 
@@ -51,12 +47,13 @@ class FormularioProdutoActivity : AppCompatActivity() {
     }
 
     private fun tentaBuscarProduto() {
-        scope.launch {
-            produtoDao.buscaPorId(produtoId)?.let {
-                withContext(Main) {
+        lifecycleScope.launch {
+            produtoDao.buscaPorId(produtoId).collect { produto ->
+                produto?.let {
                     title = "Alterar produto"
-                    preencheCampos(it)
+                    preencheCampos(produto)
                 }
+
             }
         }
     }
@@ -79,7 +76,7 @@ class FormularioProdutoActivity : AppCompatActivity() {
 
         botaoSalvar.setOnClickListener {
             val produtoNovo = criaProduto()
-            scope.launch {
+            lifecycleScope.launch {
                 produtoDao.salva(produtoNovo)
                 finish()
             }
