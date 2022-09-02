@@ -10,6 +10,7 @@ import br.com.alura.orgs.database.AppDatabase
 import br.com.alura.orgs.databinding.ActivityListaProdutosActivityBinding
 import br.com.alura.orgs.model.Produto
 import br.com.alura.orgs.ui.recyclerview.adapter.ListaProdutosAdapter
+import kotlinx.coroutines.*
 
 class ListaProdutosActivity : AppCompatActivity() {
     private val adapter = ListaProdutosAdapter(context = this)
@@ -30,7 +31,13 @@ class ListaProdutosActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        adapter.atualiza(produtoDao.buscaTodos())
+        val scope = MainScope()
+        scope.launch {
+            val produtos = withContext(Dispatchers.IO) {
+                produtoDao.buscaTodos()
+            }
+            adapter.atualiza(produtos)
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
