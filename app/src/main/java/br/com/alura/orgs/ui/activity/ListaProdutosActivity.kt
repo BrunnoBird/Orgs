@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import br.com.alura.orgs.R
 import br.com.alura.orgs.database.AppDatabase
@@ -31,9 +32,22 @@ class ListaProdutosActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        val handler = CoroutineExceptionHandler { coroutineContext, throwable ->
+            //Essa lambda expression é como se fosse o Catch
+
+            Toast.makeText(
+                this@ListaProdutosActivity,
+                "Ocorreu um erro: ${throwable.message}",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
         val scope = MainScope()
-        scope.launch {
-        //Mudamos o context da coroutines para sair da MAIN para rodar em outra thread e não dar crash
+
+        //vinculo o handle com o escopo que quero que vai ser responsavel por capturar as Exceptions
+        scope.launch(handler) {
+//            throw Exception("Laçando uma exception de teste")
+
+            //Mudamos o context da coroutines para sair da MAIN para rodar em outra thread e não dar crash
             val produtos = withContext(Dispatchers.IO) {
                 produtoDao.buscaTodos()
             }
