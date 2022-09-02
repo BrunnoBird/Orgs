@@ -22,6 +22,7 @@ class ListaProdutosActivity : AppCompatActivity() {
         val db = AppDatabase.getInstance(this)
         db.produtoDao()
     }
+    private val job = Job()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,20 +33,24 @@ class ListaProdutosActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+
+        //handler responsável por tratamento de erros
         val handler = CoroutineExceptionHandler { coroutineContext, throwable ->
             //Essa lambda expression é como se fosse o Catch
-
             Toast.makeText(
                 this@ListaProdutosActivity,
                 "Ocorreu um erro: ${throwable.message}",
                 Toast.LENGTH_SHORT
             ).show()
         }
-        val scope = MainScope()
 
-        //vinculo o handle com o escopo que quero que vai ser responsavel por capturar as Exceptions
-        scope.launch(handler) {
-//            throw Exception("Laçando uma exception de teste")
+        val scope = MainScope()
+        scope.launch(job) {
+            scope.launch {
+                repeat(1000) {
+                    delay(1000)
+                }
+            }
 
             //Mudamos o context da coroutines para sair da MAIN para rodar em outra thread e não dar crash
             val produtos = withContext(Dispatchers.IO) {
@@ -53,6 +58,12 @@ class ListaProdutosActivity : AppCompatActivity() {
             }
             adapter.atualiza(produtos)
         }
+    }
+
+    override fun onDestroy() {
+        //verifica se a activity não está mais disponivel
+        super.onDestroy()
+        job.cancel()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
