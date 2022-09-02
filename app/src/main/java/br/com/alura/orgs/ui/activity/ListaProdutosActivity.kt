@@ -33,6 +33,7 @@ class ListaProdutosActivity : AppCompatActivity() {
         super.onResume()
         val scope = MainScope()
         scope.launch {
+        //Mudamos o context da coroutines para sair da MAIN para rodar em outra thread e não dar crash
             val produtos = withContext(Dispatchers.IO) {
                 produtoDao.buscaTodos()
             }

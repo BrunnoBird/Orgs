@@ -11,6 +11,12 @@ import br.com.alura.orgs.databinding.ActivityDetalhesProdutoBinding
 import br.com.alura.orgs.extensions.formataParaMoedaBrasileira
 import br.com.alura.orgs.extensions.tentaCarregarImagem
 import br.com.alura.orgs.model.Produto
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.Dispatchers.Main
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class DetalhesProdutoActivity : AppCompatActivity() {
     private var produtoId: Long = 0L
@@ -22,6 +28,7 @@ class DetalhesProdutoActivity : AppCompatActivity() {
         //temos que colocar by laze pois esta comunicação é feita com o dispositivo somente depois que o onCreate foi executado
         AppDatabase.getInstance(this).produtoDao()
     }
+    private val scope = CoroutineScope(IO)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,11 +42,17 @@ class DetalhesProdutoActivity : AppCompatActivity() {
     }
 
     private fun buscaProduto() {
-
-        produto = produtoDao.buscaPorId(produtoId)
-        produto?.let {
-            preencheCampos(it)
-        } ?: finish()
+        //Coroutine Dispatcher.IO ele usa Pull de Thread somente para fazermos uso.
+        scope.launch {
+            //Buscamos no banco de dados em uma Thread IO
+            produto = produtoDao.buscaPorId(produtoId)
+            //Fazemos a atualização da view na MAIN Thread somente, por isso mudamos o context novamente
+            withContext(Main) {
+                produto?.let {
+                    preencheCampos(it)
+                } ?: finish()
+            }
+        }
     }
 
     //Colocando o menu na tela
@@ -60,10 +73,12 @@ class DetalhesProdutoActivity : AppCompatActivity() {
                 }
             }
             R.id.menu_detalhes_produto_remover -> {
-                produto?.let {
-                    produtoDao.remove(it)
+                scope.launch {
+                    produto?.let {
+                        produtoDao.remove(it)
+                    }
+                    finish()
                 }
-                finish()
             }
         }
         return super.onOptionsItemSelected(item)
