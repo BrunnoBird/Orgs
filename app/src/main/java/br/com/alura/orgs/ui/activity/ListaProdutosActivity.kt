@@ -31,15 +31,12 @@ class ListaProdutosActivity : AppCompatActivity() {
         setContentView(binding.root)
         configuraRecyclerView()
         configuraFab()
-    }
-
-    override fun onResume() {
-        super.onResume()
 
         lifecycleScope.launch {
-            val produtos = produtoDao.buscaTodos()
-            listaNaoOrdenada = produtos
-            adapter.atualiza(produtos)
+            produtoDao.buscaTodos().collect { produtoList ->
+                listaNaoOrdenada = produtoList
+                adapter.atualiza(produtoList)
+            }
         }
     }
 

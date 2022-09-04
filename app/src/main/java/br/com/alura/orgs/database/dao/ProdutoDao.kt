@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 interface ProdutoDao {
 
     @Query("SELECT * FROM Produto")
-    suspend fun buscaTodos(): List<Produto>
+    fun buscaTodos(): Flow<List<Produto>>
 
     //@Insert(onConflict = OnConflictStrategy.REPLACE) -> quero que caso o ID for o mesmo ele faça um update
     @Insert(onConflict = OnConflictStrategy.REPLACE)

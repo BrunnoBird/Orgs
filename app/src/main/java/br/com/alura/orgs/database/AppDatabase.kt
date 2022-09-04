@@ -16,13 +16,25 @@ abstract class AppDatabase : RoomDatabase() {
 
     companion object {
         //Singleton para não depender de instancia para usar este método!
+        @Volatile private var db: AppDatabase? = null
+        /* @Volatile ->
+            notation que quando a properti for acessa em 2 threads ao mesmo tempo
+            se uma delas gerar o valor inicialmente a outra também encherga este valor.
+
+            Sendo assim : Evita que aconteça o caso de gerar 2 instâncias ao mesmo tempo.
+         */
+
         fun getInstance(context: Context): AppDatabase {
-            return Room.databaseBuilder(
+            //caso meu DB tiver valor retornamos ele mesmo, caso não tiver criamos uma instancia
+            return db ?: Room.databaseBuilder(
                 context,
                 AppDatabase::class.java,
                 "orgs.db"
-            )
-                .build()
+            ).build()
+                .also {
+                    //also -> função de escopo que retorna a mesma instância
+                    db = it
+                }
         }
     }
 }
